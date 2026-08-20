@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+BASE="${FULLSTACK_CRITIC_HOME:-$HOME/fullstack-critic}"
+cat "$BASE/CRITIC.md"
+if [[ -f "$ROOT/PROJECT_REVIEW.md" ]]; then
+  printf '\n\n--- PROJECT CONTEXT ---\n\n'
+  cat "$ROOT/PROJECT_REVIEW.md"
+fi
+printf '\n\n--- REVIEW REQUEST ---\n\n'
+cat "$BASE/prompts/fullstack-review.md"
