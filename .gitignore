@@ -2,3 +2,6 @@
 .env
 .env.*
 .DS_Store
+
+# Local agent memory; remove this rule if intentionally versioning safe memory
+.critic-memory/

@@ -2,10 +2,25 @@
 set -euo pipefail
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 BASE="${FULLSTACK_CRITIC_HOME:-$HOME/fullstack-critic}"
+
 cat "$BASE/CRITIC.md"
-if [[ -f "$ROOT/PROJECT_REVIEW.md" ]]; then
-  printf '\n\n--- PROJECT CONTEXT ---\n\n'
-  cat "$ROOT/PROJECT_REVIEW.md"
+printf '\n\n--- AGENT CONTRACT ---\n\n'
+cat "$BASE/agent/fullstack-critic-agent.md"
+
+for file in AGENTS.md CLAUDE.md GEMINI.md PROJECT_REVIEW.md; do
+  if [[ -f "$ROOT/$file" ]]; then
+    printf '\n\n--- %s ---\n\n' "$file"
+    cat "$ROOT/$file"
+  fi
+done
+
+if [[ -d "$ROOT/.critic-memory" ]]; then
+  printf '\n\n--- PROJECT MEMORY ---\n\n'
+  find "$ROOT/.critic-memory" -maxdepth 1 -type f -name '*.md' -print0 | sort -z | while IFS= read -r -d '' file; do
+    printf '\n--- %s ---\n' "${file#$ROOT/}"
+    cat "$file"
+  done
 fi
+
 printf '\n\n--- REVIEW REQUEST ---\n\n'
 cat "$BASE/prompts/fullstack-review.md"
