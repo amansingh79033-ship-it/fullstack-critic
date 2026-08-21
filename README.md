@@ -1,107 +1,49 @@
 # Full-Stack Critic Agent
 
-A portable senior full-stack engineering agent for Claude Code, Gemini CLI, QoderCLI, Antigravity, and IDE terminals.
+A Composio-native senior full-stack engineering agent for reviewing, correcting, cleaning, optimizing, and verifying software.
 
-It reviews, plans, improves, optimizes, and verifies software across frontend, backend, APIs, databases, infrastructure, security, testing, and observability.
+It is designed to run inside a Composio workspace. No Claude Code, Gemini CLI, QoderCLI, Groq, OpenAI, or other external AI provider is required by this project.
 
-## Why do we need this?
+## Why this agent exists
 
-Fast code review often misses system-level problems. A feature can pass unit tests and still fail in production because of an unindexed query, an unbounded API response, a retry storm, a memory leak, a frontend request waterfall, missing authorization, or a connection pool that cannot support peak traffic.
+Reviews that load an entire repository are slow, expensive, and easily distracted. Production risks usually live in a small connected path: a route and its middleware, a query and its index, a component and its API hook, or a deployment resource and its scaling settings.
 
-This agent provides a repeatable engineering gate. It:
+This agent uses semantic chunking. It imports only the active layer and direct dependencies, records a verified summary, discards the active chunks, and then imports the next layer only when necessary.
 
-- Reviews the full request path instead of isolated files.
-- Finds correctness, security, reliability, and performance risks.
-- Optimizes code only after understanding behavior and constraints.
-- Preserves API contracts and backward compatibility by default.
-- Uses memory to avoid repeating known project facts and decisions.
-- Verifies changes with tests, static checks, benchmarks, and load-test recommendations.
-- Separates evidence from assumptions and never promises scale without measurements.
-
-The 100,000 requests/minute target is a review target, not a guarantee. Real capacity must be demonstrated with representative load tests.
-
-## Four-command start
-
-```bash
-git clone https://github.com/amansingh79033-ship-it/fullstack-critic.git ~/fullstack-critic
-mkdir -p ~/bin && ln -sf ~/fullstack-critic/scripts/critic ~/bin/critic && chmod +x ~/fullstack-critic/scripts/critic
-cd /path/to/your-project && cp ~/fullstack-critic/{AGENTS.md,CLAUDE.md,GEMINI.md,CRITIC.md} .
-~/bin/critic | claude
-```
-
-Replace `claude` with `gemini`, `qoder`, or another CLI that accepts stdin. Run the final command from the project root.
-
-## Review modes
-
-### Review only
-
-```bash
-~/bin/critic | claude
-```
-
-The agent reports findings and does not change files.
-
-### Plan improvements
-
-```bash
-~/bin/critic | claude "Create a prioritized implementation plan. Do not modify files."
-```
-
-### Implement improvements
-
-```bash
-~/bin/critic | claude "Implement the approved fixes. Keep the diff focused and explain every change."
-```
-
-### Verify implementation
-
-```bash
-~/bin/critic | claude "Verify the implementation with tests, lint, type checks, security checks, and performance checks."
-```
-
-Always inspect the diff before merging.
-
-## Project files
-
-- `CRITIC.md` — engineering standards and review rubric.
-- `AGENTS.md` — portable agent entry point.
-- `CLAUDE.md` — Claude Code entry point.
-- `GEMINI.md` — Gemini CLI entry point.
-- `agent/fullstack-critic-agent.md` — agent lifecycle and operating contract.
-- `prompts/fullstack-review.md` — default review request.
-- `scripts/critic` — loads rules, project context, and memory.
-- `docs/GETTING_STARTED.md` — detailed installation and usage.
-- `docs/ARCHITECTURE.md` — agent and memory architecture.
-- `docs/WHY.md` — rationale and limitations.
-
-## Memory
-
-The agent stores project-specific memory in `.critic-memory/` at the project root. This is intentionally separate from the global critic repository.
+## Agent workflow
 
 ```text
-.critic-memory/
-├── PROJECT_PROFILE.md       # stack, architecture, SLOs, scale targets
-├── DECISIONS.md             # accepted design decisions and trade-offs
-├── REVIEW_HISTORY.md        # durable findings and their status
-└── RUN_STATE.md             # current task, assumptions, and verification state
+SELECT → IMPORT → WORK → SUMMARIZE → EXPORT → DISCARD
 ```
 
-Do not store secrets, tokens, credentials, customer data, or sensitive production logs in memory. Add `.critic-memory/` to `.gitignore` unless the team intentionally wants to version its non-sensitive memory.
+The agent can review, plan, implement, optimize, and verify. It changes files only after an explicit implementation request or approval.
 
-## Operating contract
+## Repository guide
 
-The agent follows this sequence:
+- `CRITIC.md` — review rubric and output format.
+- `agent/fullstack-critic-agent.md` — Composio-only agent behavior.
+- `layers/manifest.md` — semantic layer selection rules.
+- `docs/SEMANTIC_CHUNKING.md` — chunk lifecycle and context discipline.
+- `docs/ARCHITECTURE.md` — system architecture.
+- `docs/GETTING_STARTED.md` — workspace setup.
+- `docs/WHY.md` — rationale and limitations.
 
-1. Discover repository structure and toolchain.
-2. Load safe project memory and project instructions.
-3. Inspect the relevant code and trace dependencies.
-4. Produce evidence-backed findings.
-5. Propose a small, ordered plan.
-6. Modify files only when explicitly requested or approved.
-7. Run appropriate checks.
-8. Update memory with verified facts, decisions, and unresolved risks.
-9. Report what changed, what passed, and what still needs verification.
+## Composio workspace usage
 
-## Important limitation
+1. Open a Composio workspace.
+2. Add or select the Full-Stack Critic Agent.
+3. Connect GitHub or the relevant repository/workspace tools.
+4. Select the target repository.
+5. Ask for a review, plan, implementation, optimization, or verification.
+6. Approve modifications before implementation.
+7. Review the diff and verification report.
 
-This is an instruction-driven agent. It does not replace production profiling, security review, capacity planning, or human approval. It should never invent test results or claim that a system supports a throughput target without evidence.
+Example request:
+
+```text
+Review the checkout API. Start with the api layer, load only direct backend and database dependencies when evidence requires them, summarize and discard each layer before switching, then report correctness, security, and performance findings. Do not modify files.
+```
+
+## Scale target
+
+Assess realistic capacity toward 100,000 requests per minute, approximately 1,667 requests per second. Never claim capacity without representative load-test evidence.

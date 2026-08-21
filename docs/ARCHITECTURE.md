@@ -1,57 +1,49 @@
 # Agent Architecture
 
 ```text
-IDE / CLI
+Composio Workspace Agent
    |
-   v
-scripts/critic
+   +--> CRITIC.md                         global engineering rubric
+   +--> agent/fullstack-critic-agent.md  lifecycle and safety contract
+   +--> layers/manifest.md                semantic layer selector
+   +--> project instructions              scoped constraints
+   +--> project memory                    selectively loaded
+   +--> repository tools                  files, diffs, tests, GitHub
    |
-   +--> CRITIC.md                 global engineering rubric
-   +--> agent/fullstack-critic-agent.md  lifecycle and memory contract
-   +--> PROJECT_REVIEW.md         project-specific constraints
-   +--> .critic-memory/*          project-local durable context
-   +--> prompts/fullstack-review.md      requested operation
-   |
-   v
-Selected model/CLI
-   |
-   +--> Review, plan, implement, optimize, or verify
-   +--> Tests, static analysis, benchmarks, load-test guidance
-   +--> Updated non-sensitive memory and final report
+   +--> SELECT layer
+   +--> IMPORT minimal semantic chunks
+   +--> WORK on one active layer
+   +--> SUMMARIZE verified results
+   +--> EXPORT to memory
+   +--> DISCARD active chunks
+   +--> IMPORT next layer only when required
 ```
 
-## Separation of concerns
+## Composio-only execution
 
-### Global rules
+The agent is designed to run inside a Composio workspace. Composio supplies the agent runtime and connected repository/workspace tools. The GitHub repository stores the agent contract, rubric, context protocol, and documentation; it does not bundle a separate model provider.
 
-`CRITIC.md` defines the engineering rubric and output format. It is shared across projects.
+## Layers, not monolithic context
 
-### Agent behavior
+The agent must not import the entire repository or all memory into every task. It uses the semantic layer manifest to select a focused working set. A layer may contain files, symbols, routes, queries, tests, or configuration blocks and their direct dependencies.
 
-`agent/fullstack-critic-agent.md` defines the lifecycle, modes, safety rules, and memory protocol.
+## Context lifecycle
 
-### Project context
+Each layer is a context transaction:
 
-`PROJECT_REVIEW.md` defines facts and constraints unique to an application.
+```text
+select → import → work → summarize → export → discard
+```
 
-### Memory
-
-`.critic-memory/` is project-local. This prevents one project's architecture, assumptions, or risks from leaking into another project.
-
-### Execution
-
-`scripts/critic` composes the context. The selected CLI provides the model execution environment. This makes the agent portable rather than tied to one vendor.
+The agent can move from `api` to `database`, for example, but must summarize the API findings first and discard unrelated API chunks before importing database chunks. This is context management, not a guarantee that provider-side logs are erased.
 
 ## Memory lifecycle
 
-1. Create `.critic-memory/` when a project first adopts the agent.
-2. Populate `PROJECT_PROFILE.md` with verified facts.
-3. Load memory before every meaningful task.
-4. Verify important memory against current code and configuration.
-5. Append decisions and durable findings after review or implementation.
-6. Record unresolved risks in `RUN_STATE.md`.
-7. Remove stale facts by adding a correction with date and evidence.
+Memory remains project-local and explicit:
 
-## Safety model
+- `PROJECT_PROFILE.md` for stable facts.
+- `DECISIONS.md` for accepted trade-offs.
+- `REVIEW_HISTORY.md` for durable findings.
+- `RUN_STATE.md` for the active layer and current task.
 
-The default is read-only review. Changes require an explicit implementation request or approval. Every implementation must be followed by focused verification and a diff review. The agent must not fabricate performance numbers or silently change APIs, migrations, security controls, or deployment behavior.
+Only the relevant memory file is loaded for the current layer. Memory is verified against current code before use.
