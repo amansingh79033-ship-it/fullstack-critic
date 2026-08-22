@@ -1,116 +1,107 @@
 # Getting Started
 
-## 1. Install once
+## What this repository provides
+
+`fullstack-critic` provides a Composio-native agent definition and operating protocol. It is not a standalone model server and does not require a separate AI CLI.
+
+Use it inside a Composio workspace with repository access enabled.
+
+## 1. Install the repository
+
+### Windows PowerShell
+
+```powershell
+git clone https://github.com/amansingh79033-ship-it/fullstack-critic.git $HOME\fullstack-critic
+cd $HOME\fullstack-critic
+```
+
+### WSL2, Linux, or macOS Bash
 
 ```bash
 git clone https://github.com/amansingh79033-ship-it/fullstack-critic.git ~/fullstack-critic
-mkdir -p ~/bin
-ln -sf ~/fullstack-critic/scripts/critic ~/bin/critic
-chmod +x ~/fullstack-critic/scripts/critic
+cd ~/fullstack-critic
 ```
-
-If `critic` is not found, use `~/bin/critic` directly or add `~/bin` to your shell PATH.
 
 ## 2. Prepare a project
 
-From the project root:
+Copy the instruction files into the project being reviewed.
+
+PowerShell:
+
+```powershell
+Copy-Item "$HOME\fullstack-critic\{AGENTS.md,CLAUDE.md,GEMINI.md,CRITIC.md}" .
+New-Item -ItemType Directory -Force .critic-memory
+```
+
+Bash, WSL2, Linux, or macOS:
 
 ```bash
 cp ~/fullstack-critic/{AGENTS.md,CLAUDE.md,GEMINI.md,CRITIC.md} .
 mkdir -p .critic-memory
 ```
 
-Add optional `PROJECT_REVIEW.md` with the stack, deployment, SLOs, traffic target, and constraints.
+The `CLAUDE.md` and `GEMINI.md` files are compatibility instruction files for repositories that already use those conventions. They do not require those products. The execution runtime remains Composio.
 
-## 3. Initialize memory
+## 3. Create safe project memory
 
-Create `.critic-memory/PROJECT_PROFILE.md`:
+Create these files in `.critic-memory/`:
 
-```md
-# Project Profile
-
-- Backend:
-- Frontend:
-- Database:
-- Cache:
-- Deployment:
-- API compatibility:
-- Availability target:
-- p95 latency target:
-- Traffic target:
-- Last verified:
+```text
+PROJECT_PROFILE.md
+DECISIONS.md
+REVIEW_HISTORY.md
+RUN_STATE.md
 ```
 
-Create `.critic-memory/DECISIONS.md`:
+Use [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) for the memory rules. Do not store secrets or private production data.
 
-```md
-# Architecture Decisions
+## 4. Configure the Composio workspace
 
-Append verified decisions, alternatives, trade-offs, and dates here.
+1. Open Composio.
+2. Create or select a workspace.
+3. Add the contents of `agent/fullstack-critic-agent.md` as the agent instructions.
+4. Make `CRITIC.md` available to the agent.
+5. Connect GitHub or the relevant repository tools.
+6. Give access to the target project repository.
+7. Confirm the agent can read files and inspect diffs.
+8. Keep write operations disabled for the initial review.
+
+## 5. Run a review
+
+Use this request:
+
+```text
+Review this repository using CRITIC.md and the Full-Stack Critic Agent contract. Start in discovery mode, select the smallest relevant semantic layer, load only direct dependencies, and do not modify files. Summarize and discard each layer before switching. Report exact file references, evidence, severity, performance impact, verification commands, excluded chunks, and remaining risks.
 ```
 
-Create `.critic-memory/REVIEW_HISTORY.md`:
+## 6. Plan and implement
 
-```md
-# Review History
+After reviewing the findings:
 
-Append durable findings and status: open, fixed, verified, or accepted risk.
+```text
+Create a prioritized implementation plan for the approved findings. Do not modify files. Include dependencies, rollback, compatibility risks, tests, and verification commands.
 ```
 
-Create `.critic-memory/RUN_STATE.md`:
+After approval:
 
-```md
-# Current Run
-
-- Task:
-- Files inspected:
-- Files changed:
-- Checks run:
-- Unresolved questions:
-- Last updated:
+```text
+Implement the approved plan. Modify only required files, preserve public APIs, run focused checks, inspect the final diff, update non-sensitive memory, and report all results exactly.
 ```
 
-Do not put secrets or sensitive production data in these files. Add `.critic-memory/` to `.gitignore` unless the team wants to version its non-sensitive memory.
+## 7. Verify
 
-## 4. Run the agent
-
-Review:
-
-```bash
-~/bin/critic | claude
+```text
+Verify the implementation. Run available tests, lint, type checks, security checks, benchmarks, and load-test checks. Do not invent results. Report passed, failed, skipped, and unavailable checks.
 ```
 
-Plan:
+## 8. Operating modes
 
-```bash
-~/bin/critic | claude "Create a prioritized plan. Do not modify files."
-```
+- **Review:** read-only evidence and findings.
+- **Plan:** ordered implementation plan without edits.
+- **Implement:** approved changes only.
+- **Optimize:** baseline, hypothesis, measured change, comparison.
+- **Verify:** tests, checks, diff, and remaining risks.
 
-Implement an approved plan:
+## 9. Safety
 
-```bash
-~/bin/critic | claude "Implement the approved plan, then run focused verification."
-```
-
-Verify:
-
-```bash
-~/bin/critic | claude "Verify correctness, security, tests, performance, and scalability."
-```
-
-Replace `claude` with the CLI you use.
-
-## 5. Safe workflow
-
-1. Start in review mode.
-2. Read and approve the plan.
-3. Run implementation mode on a branch.
-4. Inspect the diff.
-5. Run tests, lint, type checks, and security checks.
-6. Run a representative benchmark or load test for performance work.
-7. Ask the agent to verify.
-8. Review memory updates before committing.
-
-## 6. Pull requests
-
-Attach the generated review to the pull request. Require human approval for security changes, migrations, API changes, and production configuration. Treat the 100,000 requests/minute target as a capacity-testing requirement, not a static-review conclusion.
+The default mode is read-only. Require explicit approval for code changes, migrations, security-policy changes, secrets, infrastructure, or public API changes. Use a branch for implementation and inspect the diff before merging.
